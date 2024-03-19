@@ -15,5 +15,5 @@ This project involves creating a system where a car moves forward and intermitte
 - **Step Counting:** Keeps track of the number of steps taken by the car.
 
 ## Implementation
-- **Hardware:** Utilizes a car chassis with motor drivers, wheels,servo, and IR sensor.
+- **Hardware:** Utilizes a car chassis with motor, wheels,servo, and IR sensor.
 - **Software:** Implemented using a ATmega32 microcontroller. Code logic includes algorithms for movement control, mine detection, and decision-making based on sensor inputs.
