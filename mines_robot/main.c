@@ -7,141 +7,76 @@
 
 #include "StdTypes.h"
 #include "Delay.h"
-#include "Dio.h"
-#include "Fcpu.h"
-#include "Gie.h"
-#include "Gpt.h"
-#include "Interrupts.h"
-#include "Pwm.h"
 #include "mines_detector.h"
 
- u16 Timer_Counter = 0;
- u8  Detected_Mine = 0;
- u16 i = 0;
- u8 flag1 = 0;
- u8 flag2 = 0;
- u8 flag3 = 0;
+// Global variables
+u16 Timer_Counter = 0;   // Counter for the timer
+u8 Detected_Mine = 0;    // Flag indicating whether a mine is detected
+u16 i = 0;               // Counter variable
+u8 flag1 = 0;            // Flag 1
+u8 flag2 = 0;            // Flag 2
+u8 flag3 = 0;            // Flag 3
+u8 steps = 0;            // Steps counter
+u8 Total_Steps= 0;       // Total steps counter
 
- u8 steps = 0;
- u8 Total_Steps= 0;
 
-
-void Timer_Handler (void)
+int main(void)
 {
-	Gpt_SetCounterValue (GPT_INT_SOURCE_TIM0_OVF, 6);
-	Timer_Counter++;
+    // Initialize the car
+    Car_Init();
 
-	if (Timer_Counter == 2000)
-	{
-		flag1 = 1;
-	}
-	if (Timer_Counter == 2000)
-	{
-        flag2 = 1;
-	}
-	if (Timer_Counter == 4000)
-	{
-		flag3 = 1;
-	}
-}
+    while (1)
+    {
+        // Loop until steps reach 4
+        while (steps < 4)
+        {
+            // Reset flags
+            flag1 = 0;
+            flag2 = 0;
+            flag3 = 0;
 
+            // Check if a mine is detected
+            Car_Detected();
+            if (Detected_Mine == 1)
+            {
+                Detected_Mine = 0;
+                // Take appropriate action if a mine is detected
+                Car_Draft();
+            }
+            else
+            {
+                // Continue moving forward
+                Car_Continue();
+            }
+        } // end of first part
 
-int main (void)
-{
-	Pwm_Init(&Pwm_Configuration);
+        // Accumulate steps
+        Total_Steps += steps;
 
-	Gpt_Init(&Gpt_Configuration);
-    Gpt_EnableInterrupt(GPT_INT_SOURCE_TIM0_OVF);
-    Gpt_SetCallback(GPT_INT_SOURCE_TIM0_OVF, Timer_Handler);
-    Gpt_SetCounterValue (GPT_INT_SOURCE_TIM0_OVF, 6);
+        if (Total_Steps == 4)
+        {
+            // Perform a right round
+            Car_Round(ROUND_RIGHT);
+            // Check if a mine is detected after the right round
+            Car_Detected();
+            // Perform another right round
+            Car_Round(ROUND_RIGHT);
+        }
+        else if (Total_Steps == 8)
+        {
+            // Perform a left round
+            Car_Round(ROUND_LEFT);
+            // Check if a mine is detected after the left round
+            Car_Detected();
+            // Perform another left round
+            Car_Round(ROUND_LEFT);
+            // Reset the total steps counter
+            Total_Steps = 0;
+        }
 
+        // Reset the steps counter
+        steps = 0;
+    } // end of while
 
-	Dio_SetPinMode (IN1,DIO_MODE_OUTPUT);
-	Dio_SetPinMode (IN2,DIO_MODE_OUTPUT);
-	Dio_SetPinMode (IN3,DIO_MODE_OUTPUT);
-	Dio_SetPinMode (IN4,DIO_MODE_OUTPUT);
-
-	Dio_SetPinMode (BUZZ,DIO_MODE_OUTPUT);
-	Dio_SetPinMode(IR,DIO_MODE_INPUT_PULLUP);
-	// Dio_SetPinMode (LED,DIO_MODE_INPUT_PULLUP);
-
-
-	Pwm_SetICR1(20000);
-
-	Gie_Enable();
-	while(1)
-	{
-
-	  while(steps<4)
-	  {
-	    flag1 = 0;
-	    flag2 = 0;
-	    flag3 = 0;
-		Car_Detected();
-
-		if(Detected_Mine == 1)
-		{
-			Detected_Mine=0;
-
-		     flag2 = 0;
-			Timer_Counter = 0;
-			while(!flag2)
-			{
-				Car_direction(BACKWORD);
-			}
-			Car_direction(STOP);
-
-            _delay_ms(50);
-		     flag3 = 0;
-			Timer_Counter = 0;
-		    while(!flag3)
-			{
-				Car_direction(RIGHT);
-			}
-			Car_direction(STOP);
-
-            _delay_ms(50);
-		     flag3 = 0;
-			Timer_Counter = 0;
-		    while(!flag3)
-			{
-				Car_direction(LEFT);
-			}
-			Car_direction(STOP);
-
-
-		}
-		else
-		{
-		    flag1 = 0;
-			Timer_Counter = 0;
-
-			while(!flag1)
-			{
-				Car_direction(FORWORD);
-			}
-			Car_direction(STOP);
-			steps++;
-		}
-
-	  } // end of first part
-
-	  Total_Steps += steps;
-	  if(Total_Steps == 4)
-	  {
-		    Car_Round(ROUND_RIGHT);
-			Car_Detected();
-		    Car_Round(ROUND_RIGHT);
-	  }
-	  else if (Total_Steps == 8)
-	  {
-		    Car_Round(ROUND_LEFT);
-			Car_Detected();
-		    Car_Round(ROUND_LEFT);
-		    Total_Steps = 0;
-	  }
-
-	  steps = 0;
-	}  // end of while
-
-}  // end of main
+    return 0;
+} // end of main
