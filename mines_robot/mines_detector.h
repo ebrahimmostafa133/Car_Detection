@@ -5,6 +5,7 @@
  *      Author: Ebrahim Mostafa
  */
 
+
 #ifndef INC_MINES_DETECTOR_H
 #define INC_MINES_DETECTOR_H
 
